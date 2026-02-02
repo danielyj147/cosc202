@@ -21,16 +21,19 @@ public class SetSimilarity {
                 Set<E> a = setList.get(i);
                 Set<E> b = setList.get(j);
 
-                Set<E> intersection = new HashSet<E>(a);
-                intersection.retainAll(b);
-
-                int intersectionSize = intersection.size();
-                int aSize = a.size();
-                int bSize = b.size();
-
-                int unionSize = aSize + bSize - intersectionSize;
-
-                double sim = (double) intersectionSize / unionSize;
+                int intersectionSize = 0; // count size instead of creating map
+                Set<E> smaller = a.size() < b.size() ? a : b;
+                Set<E> larger = a.size() < b.size() ? b : a;
+                
+                for(E element : smaller){
+                    if(larger.contains(element)){
+                        intersectionSize++;
+                    }
+                }
+                int unionSize = a.size() + b.size() - intersectionSize;
+                
+                // Avoid zero divisoin
+                double sim = unionSize > 0 ? (double) intersectionSize / unionSize : 0.0;
 
                 // Put sim to [i][j]
                 sims.computeIfAbsent(i, k -> new HashMap<>()).put(j, sim);
