@@ -1,11 +1,5 @@
 import java.util.*;
 
-// Create main class
-
-
-
-
-
 public class MaxPop {
 
     public static PopOutput maxpop(HashMap<Integer, LifeYears> data) {
