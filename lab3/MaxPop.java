@@ -3,7 +3,7 @@ import java.util.*;
 public class MaxPop {
 
     public static PopOutput maxpop(HashMap<Integer, LifeYears> data) {
-        if (data == null)
+        if (data == null || data.isEmpty())
             return null;
         HashMap<Integer, Integer> years = new HashMap<>();
         int maxPop = 0;
