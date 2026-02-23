@@ -1,4 +1,3 @@
-package lab4;
 import java.util.Arrays;
 import java.util.Stack;
 
@@ -10,7 +9,7 @@ public class Uppermost {
      * @param intercepts
      * @return upper bound lines
      */
-    public static Stack<Integer> visibleLines(double[] slopes, double[] intercepts){
+    public static int[] visibleLines(double[] slopes, double[] intercepts){
         Integer[] idx = new Integer[slopes.length]; // original indicies. if i is the i th smallest slope, idx[i] = original index of the line.
         Stack<Integer> ret = new Stack<>();
 
@@ -31,6 +30,11 @@ public class Uppermost {
         // for every x
         for(int i = 0; i < idx.length; i++){
             int l3 = idx[i];
+
+            // if parallel, keep higher intercept.
+            if (slopes[l3] == slopes[ret.peek()]) {
+                ret.pop();
+            }
             
             // for every stack
             while(ret.size() >= 2){
@@ -55,7 +59,7 @@ public class Uppermost {
             }
             ret.push(l3);
         }
-        return ret;
+        return ret.stream().mapToInt(Integer::intValue).toArray();
     }
 
     public static double getInterceptX(double s1, double i1, double s2, double i2){
@@ -65,7 +69,7 @@ public class Uppermost {
     public static void main(String[] args) {
         double[] slopes = {-1, 2, 3, 4};
         double[] intercepts = {0, 0, 0, -100};
-        Stack<Integer> result = visibleLines(slopes, intercepts);
-        System.out.println(result.toString());
+        int[] result = visibleLines(slopes, intercepts);
+        System.out.println(Arrays.toString(result));
     }
 }
