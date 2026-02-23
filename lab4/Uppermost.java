@@ -31,11 +31,11 @@ public class Uppermost {
         for(int i = 0; i < idx.length; i++){
             int l3 = idx[i];
 
-            // if parallel, keep higher intercept.
-            if (slopes[l3] == slopes[ret.peek()]) {
+            // check for empty
+            if (!ret.isEmpty() && slopes[l3] == slopes[ret.peek()]) {
                 ret.pop();
             }
-            
+
             // for every stack
             while(ret.size() >= 2){
                 int l2 = ret.pop();
