@@ -39,28 +39,34 @@ public class Trie {
      */
     private void t(String target, int dist_origin, int dist, TrieNode node, HashMap<String, Integer> words, String word){
         if(target.length() == 0 && node.isWord && dist >= 0){
-            words.put(word, dist_origin-dist);
+            int deltaDist = dist_origin - dist;
+            if(!words.containsKey(word) || deltaDist < words.get(word)){
+                words.put(word, deltaDist);
+            }        
         }
         if(dist < 0){
             return ;
         }
-        if(target.length()==0){
-            return;
+        
+        // del doesn't rely on c!!
+        if(target.length() > 0){
+            t(target.substring(1), dist_origin, dist - 1, node, words, word);
         }
-        Character next = target.charAt(0);
+        
+        Character next = target.length() > 0 ? target.charAt(0) : null;
         for(Character c : node.children.keySet()){
             TrieNode current = node.children.get(c);
-            if(next == c){
+
+            if(next != null && next == c){
                 // exact match
                 t(target.substring(1), dist_origin, dist, current, words, word + c);
-            } else {
-                // subs
-                t(target.substring(1), dist_origin, dist - 1, current, words, word + c);
-                // del
-                t(target.substring(1), dist_origin, dist - 1, node, words, word);
-                // insert
-                t(target, dist_origin, dist-1, current, words, word + c);
             }
+            if(next != null && next != c){
+                // substitution
+                t(target.substring(1), dist_origin, dist - 1, current, words, word + c);
+            }
+            // insertion
+            t(target, dist_origin, dist - 1, current, words, word + c);
         }
     }
 
@@ -165,6 +171,6 @@ public class Trie {
         }
 
         System.out.println(dictionary.contains("cat"));
-        System.out.println(dictionary.suggestions("cat", 1));
+        System.out.println(dictionary.suggestions("cat", 2));
     }
 }
