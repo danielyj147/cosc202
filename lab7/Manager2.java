@@ -1,10 +1,17 @@
+import java.util.TreeSet;
+import java.util.Comparator;
+
 public class Manager2 extends DiskManager {
 
-    private Disk current;
+    // private Disk current;
+    private DiskComparator c;
+    private TreeSet<Disk> t;
 
     public Manager2(int capacity) {
         super(capacity);
-        current = open(); // Open the first disk to start
+        c = new DiskComparator();
+        t = new TreeSet<>(c);
+        t.add(open());
     }
 
     @Override
@@ -17,14 +24,32 @@ public class Manager2 extends DiskManager {
             throw new IllegalArgumentException("File size exceeds disk capacity.");
         }
 
-        if (size <= current.getFree()) {
-            current.close();
-            current = open();
+        Disk ceiling = t.ceiling(new Disk(size)); // find least & enough space
+
+        if (ceiling != null) {
+            t.remove(ceiling);
+        } else {
+            ceiling = open();
+        }
+        
+        if (!ceiling.assign(fileID, size)) {
+            throw new IllegalStateException(String.format("Failed to assign file (ID=%d, size=%d)\nto disk %s", fileID, size, ceiling.toString()));
         }
 
-        if (!current.assign(fileID, size)) {
-            throw new IllegalStateException(String.format("Failed to assign file (ID=%d, size=%d)\nto disk %s", fileID, size, current.toString()));
+        if (ceiling.getFree() > 0) {
+            t.add(ceiling);
+        }    
+    }
+
+
+    public class DiskComparator implements Comparator<Disk> {
+        @Override
+        public int compare(Disk firstDisk, Disk seconDisk) {
+            int cmp  = Integer.compare(firstDisk.getFree(), seconDisk.getFree());
+            if (cmp != 0) return cmp;
+            return Integer.compare(firstDisk.getID(), seconDisk.getID()); // when equal, return smaller id first
         }
+
     }
 
     public static void main(String[] args) {
