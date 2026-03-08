@@ -35,7 +35,8 @@ public class Manager3 extends DiskManager {
         if (!curr.assign(fileID, size)) {
             throw new IllegalStateException(String.format("Failed to assign file (ID=%d, size=%d)\nto disk %s", fileID, size, curr.toString()));
         }
-        q.add(curr);
+
+        if (curr.getFree() > 0) q.add(curr); // add back if free
     }
     public class DiskComparator implements Comparator<Disk> {
         @Override
