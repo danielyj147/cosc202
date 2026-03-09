@@ -1,10 +1,11 @@
 public class Manager4 extends DiskManager {
 
-    private Disk current;
+    private DiskTree t;
 
     public Manager4(int capacity) {
         super(capacity);
-        current = open(); // Open the first disk to start
+        t = new DiskTree(); // tree by id(= age)
+        t.put(open());
     }
 
     @Override
@@ -17,13 +18,20 @@ public class Manager4 extends DiskManager {
             throw new IllegalArgumentException("File size exceeds disk capacity.");
         }
 
-        if (size <= current.getFree()) {
-            current.close();
-            current = open();
-        }
+        Disk oldest = t.getOldest(size);
 
-        if (!current.assign(fileID, size)) {
-            throw new IllegalStateException(String.format("Failed to assign file (ID=%d, size=%d)\nto disk %s", fileID, size, current.toString()));
+        if (oldest != null){
+            t.delete(oldest.getID());
+            oldest.assign(fileID, size);
+            if(oldest.getFree() > 0){
+                t.put(oldest);
+            }
+        } else {
+            Disk newDisk = open();
+            newDisk.assign(fileID, size);
+            if(newDisk.getFree() > 0){
+                t.put(newDisk);
+            }        
         }
     }
 
@@ -33,6 +41,7 @@ public class Manager4 extends DiskManager {
         manager.assignFile(2, 30);
         manager.assignFile(3, 40);
         manager.assignFile(4, 10);
+        manager.assignFile(5, 10);
         System.out.println(manager);
     }
     
