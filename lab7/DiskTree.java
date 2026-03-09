@@ -407,4 +407,27 @@ public class DiskTree {
         return isBalanced(x.left, black) && isBalanced(x.right, black);
     }
 
+    /***************************************************************************
+    *  Max Biinary Tree Search Function
+    ***************************************************************************/
+
+    /**
+     * 
+     * @param size
+     * @return oldest disk w/ enough space OR null if there is no such disk
+     */
+    public Disk getOldest(int size){
+        Node node = root;
+        
+        while (node != null){
+            if (node.left != null && node.left.max >= size){ // check older
+                node = node.left;
+            } else if (node.disk.getFree() >= size) { // check self
+                return node.disk;
+            } else { // check younger
+                node = node.right;
+            }
+        }
+        return null;
+    }
 }
