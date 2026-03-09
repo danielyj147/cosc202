@@ -20,10 +20,12 @@ public class DiskTree {
         private Disk disk;         // disk object (ID is key)
         private Node left, right;  // links to left and right subtrees
         private boolean color;     // color of parent link
+        private int max;
 
         public Node(Disk disk, boolean color) {
             this.disk = disk;
             this.color = color;
+            this.max = disk.getFree();
         }
     }
 
@@ -117,14 +119,24 @@ public class DiskTree {
         if (h == null) return new Node(disk, RED);
 
         int cmp = Integer.compare(disk.getID(), h.disk.getID());
-        if      (cmp < 0) h.left  = put(h.left,  disk);
-        else if (cmp > 0) h.right = put(h.right, disk);
-        else              h.disk   = disk;
 
+        if (cmp < 0){ 
+            h.left  = put(h.left,  disk);
+        } else if (cmp > 0) {
+            h.right = put(h.right, disk);
+        }
+        else {
+            h.disk   = disk;
+        }
+        
         // fix-up any right-leaning links
         if (isRed(h.right) && !isRed(h.left))      h = rotateLeft(h);
         if (isRed(h.left)  &&  isRed(h.left.left)) h = rotateRight(h);
         if (isRed(h.left)  &&  isRed(h.right))     flipColors(h);
+
+        h.max = h.disk.getFree();
+        if (h.left != null)  h.max = Math.max(h.max, h.left.max);
+        if (h.right != null) h.max = Math.max(h.max, h.right.max);
 
         return h;
     }
@@ -198,6 +210,17 @@ public class DiskTree {
         x.right = h;
         x.color = h.color;
         h.color = RED;
+
+        // recalibrating h max
+        h.max = h.disk.getFree();
+        if (h.left != null)  h.max = Math.max(h.max, h.left.max);
+        if (h.right != null)  h.max = Math.max(h.max, h.right.max);
+
+        // recalibrating x max
+        x.max = x.disk.getFree();
+        if (x.left != null)  x.max = Math.max(x.max, x.left.max);
+        if (x.right != null)  x.max = Math.max(x.max, x.right.max);
+
         return x;
     }
 
@@ -209,6 +232,17 @@ public class DiskTree {
         x.left = h;
         x.color = h.color;
         h.color = RED;
+
+        // recalibrating h max
+        h.max = h.disk.getFree();
+        if (h.left != null)  h.max = Math.max(h.max, h.left.max);
+        if (h.right != null)  h.max = Math.max(h.max, h.right.max);
+
+        // recalibrating x max
+        x.max = x.disk.getFree();
+        if (x.left != null)  x.max = Math.max(x.max, x.left.max);
+        if (x.right != null)  x.max = Math.max(x.max, x.right.max);
+
         return x;
     }
 
@@ -247,6 +281,11 @@ public class DiskTree {
         if (isRed(h.right) && !isRed(h.left))    h = rotateLeft(h);
         if (isRed(h.left) && isRed(h.left.left)) h = rotateRight(h);
         if (isRed(h.left) && isRed(h.right))     flipColors(h);
+
+        // for delete ==> when a child is gone, needs recalibrating 
+        h.max = h.disk.getFree();
+        if (h.left != null)  h.max = Math.max(h.max, h.left.max);
+        if (h.right != null) h.max = Math.max(h.max, h.right.max);
 
         return h;
     }
