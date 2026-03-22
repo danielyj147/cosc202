@@ -1,55 +1,49 @@
-import java.util.TreeSet;
-import java.util.Comparator;
+import java.util.TreeMap;
+import java.util.ArrayList;
 
 public class Manager2 extends DiskManager {
 
-    // private Disk current;
-    private DiskComparator c;
-    private TreeSet<Disk> t;
+    private TreeMap<Integer, ArrayList<Disk>> t;
 
     public Manager2(int capacity) {
         super(capacity);
-        c = new DiskComparator();
-        t = new TreeSet<>(c);
-        t.add(open());
+        t = new TreeMap<>();
+        addDisk(open());
+    }
+
+    private void addDisk(Disk d) {
+        int free = d.getFree();
+        if (!t.containsKey(free)) {
+            t.put(free, new ArrayList<>());
+        }
+        t.get(free).add(d);
+    }
+
+    private Disk removeDisk(int free) {
+        ArrayList<Disk> list = t.get(free);
+        Disk d = list.remove(list.size() - 1);
+        if (list.isEmpty()) {
+            t.remove(free);
+        }
+        return d;
     }
 
     @Override
     public void assignFile(int fileID, int size) {
-        if (size <= 0) {
-            throw new IllegalArgumentException("File size must be positive.");
-        }
+        Integer key = t.ceilingKey(size);
+        Disk target;
 
-        if (size > getCapacity()) {
-            throw new IllegalArgumentException("File size exceeds disk capacity.");
-        }
-
-        Disk ceiling = t.ceiling(new Disk(size)); // find least & enough space
-
-        if (ceiling != null) {
-            t.remove(ceiling);
+        if (key != null) {
+            target = removeDisk(key);
         } else {
-            ceiling = open();
-        }
-        
-        if (!ceiling.assign(fileID, size)) {
-            throw new IllegalStateException(String.format("Failed to assign file (ID=%d, size=%d)\nto disk %s", fileID, size, ceiling.toString()));
+            target = open();
         }
 
-        if (ceiling.getFree() > 0) {
-            t.add(ceiling);
-        }    
-    }
+        target.assign(fileID, size);
 
-
-    public class DiskComparator implements Comparator<Disk> {
-        @Override
-        public int compare(Disk firstDisk, Disk seconDisk) {
-            int cmp  = Integer.compare(firstDisk.getFree(), seconDisk.getFree());
-            if (cmp != 0) return cmp;
-            return Integer.compare(firstDisk.getID(), seconDisk.getID()); // when equal, return smaller id first
+        if (target.getFree() > 0) {
+            addDisk(target);
         }
-
     }
 
     public static void main(String[] args) {
@@ -60,5 +54,5 @@ public class Manager2 extends DiskManager {
         manager.assignFile(4, 10);
         System.out.println(manager);
     }
-    
+
 }

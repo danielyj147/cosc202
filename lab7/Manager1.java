@@ -17,7 +17,7 @@ public class Manager1 extends DiskManager {
             throw new IllegalArgumentException("File size exceeds disk capacity.");
         }
 
-        if (size <= current.getFree()) {
+        if (size > current.getFree()) {
             current.close();
             current = open();
         }
