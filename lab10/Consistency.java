@@ -4,7 +4,6 @@ public class Consistency {
 
     public static Set<IntervalInfo> checkStatements(Collection<Statement> statements) {
         Map<String, Set<String>> adj = new HashMap<>();
-        Map<String, Integer> inDegree = new HashMap<>();
         Set<Integer> seen = new HashSet<>();
 
         for (Statement st : statements) {
@@ -15,46 +14,36 @@ public class Consistency {
             seen.add(f);
             seen.add(s);
 
-            // Ensure all nodes exist in the graph
-            for (String node : new String[]{fs, fe, ss, se}) {
+            for (String node : new String[]{fs, fe, ss, se})
                 adj.computeIfAbsent(node, k -> new HashSet<>());
-                inDegree.putIfAbsent(node, 0);
-            }
 
-            // Every interval: start < end
-            addEdge(adj, inDegree, fs, fe);
-            addEdge(adj, inDegree, ss, se);
+            // Every interval start < end
+            addEdge(adj, fs, fe);
+            addEdge(adj, ss, se);
 
             if (st.isOverlap()) {
-                // X starts before Y ends AND Y starts before X ends
-                addEdge(adj, inDegree, fs, se);
-                addEdge(adj, inDegree, ss, fe);
+                addEdge(adj, fs, se);
+                addEdge(adj, ss, fe);
             } else {
-                // X ends before Y starts
-                addEdge(adj, inDegree, fe, ss);
+                addEdge(adj, fe, ss);
             }
         }
 
-        // DFS
-        Queue<String> queue = new LinkedList<>();
-        for (var entry : inDegree.entrySet()) {
-            if (entry.getValue() == 0) queue.add(entry.getKey());
+        Map<String, Integer> state = new HashMap<>(); // 0=unvisited, 1=in-progress, 2=done
+        Deque<String> order = new ArrayDeque<>();
+
+        for (String node : adj.keySet()) {
+            if (state.getOrDefault(node, 0) == 0) {
+                if (!dfs(node, adj, state, order)) return null;
+            }
         }
 
+        // Assign times
         Map<String, Integer> timeOf = new HashMap<>();
         int time = 1;
-        while (!queue.isEmpty()) {
-            String node = queue.poll();
-            timeOf.put(node, time++);
-            for (String neighbor : adj.getOrDefault(node, Collections.emptySet())) {
-                int deg = inDegree.merge(neighbor, -1, Integer::sum);
-                if (deg == 0) queue.add(neighbor);
-            }
-        }
+        while (!order.isEmpty())
+            timeOf.put(order.pop(), time++);
 
-        if (timeOf.size() != inDegree.size()) return null;
-
-        // Build result
         Set<IntervalInfo> result = new HashSet<>();
         for (int id : seen) {
             IntervalInfo info = new IntervalInfo(id);
@@ -65,10 +54,21 @@ public class Consistency {
         return result;
     }
 
-    private static void addEdge(Map<String, Set<String>> adj, Map<String, Integer> inDegree, String from, String to) {
-        if (adj.computeIfAbsent(from, k -> new HashSet<>()).add(to)) {
-            inDegree.merge(to, 1, Integer::sum);
+    private static boolean dfs(String node, Map<String, Set<String>> adj,
+                               Map<String, Integer> state, Deque<String> order) {
+        state.put(node, 1);
+        for (String neighbor : adj.getOrDefault(node, Collections.emptySet())) {
+            int s = state.getOrDefault(neighbor, 0);
+            if (s == 1) return false; // back edge = cycle
+            if (s == 0 && !dfs(neighbor, adj, state, order)) return false;
         }
+        state.put(node, 2);
+        order.add(node);
+        return true;
+    }
+
+    private static void addEdge(Map<String, Set<String>> adj, String from, String to) {
+        adj.computeIfAbsent(from, k -> new HashSet<>()).add(to);
     }
 
 }
