@@ -1,4 +1,3 @@
-package lab10;
 import java.util.*;
 public class Consistency {
 
@@ -63,7 +62,7 @@ public class Consistency {
             if (s == 0 && !dfs(neighbor, adj, state, order)) return false;
         }
         state.put(node, 2);
-        order.add(node);
+        order.push(node);
         return true;
     }
 
